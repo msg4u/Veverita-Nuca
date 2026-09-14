@@ -1,0 +1,6 @@
+{
+  "name": "Veverița Nuca și Roata Fermecată",
+  "description": "Aplicație educațională interactivă pentru copii (4-7 ani): povestea anotimpurilor, roata magică rotativă, atelier DIY de meșteșugărit, jocuri și ghid pentru părinți.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
