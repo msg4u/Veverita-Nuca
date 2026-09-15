@@ -319,31 +319,51 @@ export const SmallTopDiscSVG: React.FC<{ size?: number; className?: string }> = 
       <line x1="188" y1="200" x2="212" y2="200" stroke="#78350F" strokeWidth="2.5" />
 
       {/* Squirrel Nuca illustration sitting right by the window's edge */}
-      {/* Placed at top edge of the window, pointing inside! */}
-      <g transform="translate(155, -8)">
-        {/* Fluffy tail */}
-        <path d="M 50,55 C 65,48 78,36 74,18 C 70,2 52,-1 48,7 C 45,12 55,22 50,36 C 47,42 43,47 48,50 Z" fill="#EA580C" stroke="#78350F" strokeWidth="2" />
+      {/* Placed at top edge of the window, pointing joyfully inside! */}
+      <g transform="translate(150, -12)">
+        {/* Fluffy tail with highlights */}
+        <path d="M 52,58 C 72,50 86,34 82,14 C 77,-4 54,-4 48,8 C 44,14 56,26 50,40 C 47,46 42,52 48,56 Z" fill="#EA580C" stroke="#78350F" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M 58,16 C 68,22 74,32 70,44" stroke="#FED7AA" strokeWidth="2.5" strokeLinecap="round" />
+
         {/* Squirrel body */}
-        <ellipse cx="38" cy="48" rx="16" ry="18" fill="#F97316" stroke="#78350F" strokeWidth="2" />
-        <ellipse cx="38" cy="51" rx="10" ry="12" fill="#FEF3C7" />
+        <ellipse cx="38" cy="50" rx="18" ry="20" fill="#F97316" stroke="#78350F" strokeWidth="2.5" />
+        <ellipse cx="38" cy="53" rx="11" ry="14" fill="#FFFBEB" />
+
         {/* Head */}
-        <circle cx="38" cy="28" r="14" fill="#F97316" stroke="#78350F" strokeWidth="2" />
-        {/* Ears */}
-        <path d="M 28,19 C 27,9 22,7 24,16 Z" fill="#EA580C" stroke="#78350F" strokeWidth="1.5" />
-        <path d="M 48,19 C 49,9 54,7 52,16 Z" fill="#EA580C" stroke="#78350F" strokeWidth="1.5" />
-        {/* Cheek blush & eyes */}
-        <circle cx="33" cy="27" r="2.8" fill="#1E293B" />
-        <circle cx="43" cy="27" r="2.8" fill="#1E293B" />
-        <circle cx="32" cy="26" r="1" fill="white" />
-        <circle cx="42" cy="26" r="1" fill="white" />
-        <circle cx="28" cy="33" r="2.5" fill="#FB7185" opacity="0.6" />
-        <circle cx="48" cy="33" r="2.5" fill="#FB7185" opacity="0.6" />
-        {/* Cute nose and smile */}
-        <circle cx="38" cy="32" r="2" fill="#78350F" />
-        <path d="M 36,35 Q 38,37 40,35" stroke="#78350F" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <circle cx="38" cy="28" r="16" fill="#F97316" stroke="#78350F" strokeWidth="2.5" />
+
+        {/* Big fluffy ears with brush tufts */}
+        <path d="M 26,18 C 24,6 18,5 21,15 Z" fill="#EA580C" stroke="#78350F" strokeWidth="2" />
+        <path d="M 20,6 C 18,2 15,4 17,9" stroke="#78350F" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M 50,18 C 52,6 58,5 55,15 Z" fill="#EA580C" stroke="#78350F" strokeWidth="2" />
+        <path d="M 56,6 C 58,2 61,4 59,9" stroke="#78350F" strokeWidth="1.8" strokeLinecap="round" />
+
+        {/* Chubby cheeks & rosy blush */}
+        <circle cx="27" cy="34" r="7" fill="#FDBA74" opacity="0.9" />
+        <circle cx="49" cy="34" r="7" fill="#FDBA74" opacity="0.9" />
+        <circle cx="26" cy="35" r="3.5" fill="#FB7185" opacity="0.6" />
+        <circle cx="50" cy="35" r="3.5" fill="#FB7185" opacity="0.6" />
+
+        {/* Big anime storybook eyes with double catchlights */}
+        <ellipse cx="32" cy="26" rx="3.8" ry="4.2" fill="#1E293B" />
+        <circle cx="30.8" cy="24.8" r="1.5" fill="white" />
+        <circle cx="33.2" cy="27.5" r="0.7" fill="white" />
+
+        <ellipse cx="44" cy="26" rx="3.8" ry="4.2" fill="#1E293B" />
+        <circle cx="42.8" cy="24.8" r="1.5" fill="white" />
+        <circle cx="45.2" cy="27.5" r="0.7" fill="white" />
+
+        {/* Cute nose, smile and FUNNY WHITE SQUIRREL TOOTH */}
+        <circle cx="38" cy="31" r="1.8" fill="#78350F" />
+        <path d="M 34,34 Q 38,39 42,34" fill="#BE123C" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
+        {/* Tiny buck tooth */}
+        <rect x="37" y="34" width="2" height="2" rx="0.5" fill="white" stroke="#78350F" strokeWidth="0.5" />
+
         {/* Paw pointing happily through the window! */}
-        <path d="M 48,46 Q 62,48 70,54" stroke="#EA580C" strokeWidth="4" strokeLinecap="round" />
-        <circle cx="70" cy="54" r="3" fill="#C2410C" />
+        <path d="M 48,48 Q 66,48 76,56" stroke="#EA580C" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="76" cy="56" r="4" fill="#C2410C" />
+        {/* Golden star sparkle at paw tip */}
+        <polygon points="78,48 80,52 84,53 80,54 78,58 76,54 72,53 76,52" fill="#FCD34D" />
       </g>
     </svg>
   );

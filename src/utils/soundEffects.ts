@@ -216,6 +216,39 @@ class SoundEngine {
     }
   }
 
+  // Cute cheerful squirrel chirp / chuckle
+  public playSquirrelChirp() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      // 3 quick chirpy notes with pitch bend
+      const freqs = [1200, 1600, 2100];
+      freqs.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const start = this.ctx.currentTime + idx * 0.07;
+
+        osc.frequency.setValueAtTime(freq, start);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.35, start + 0.05);
+
+        gain.gain.setValueAtTime(0.12, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.06);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(start);
+        osc.stop(start + 0.065);
+      });
+    } catch {
+      // Ignore
+    }
+  }
+
   // Triumphant Fanfare for quiz & activity completion
   public playSuccessFanfare() {
     if (this.isMuted) return;

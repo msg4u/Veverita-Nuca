@@ -4,18 +4,16 @@ import { SeasonId } from '../types';
 import { BaseDiscSVG, SmallTopDiscSVG } from './SeasonWheelArt';
 import { NucaCharacter } from './NucaCharacter';
 import { soundEngine, SpeechService } from '../utils/soundEffects';
-import confetti from 'canvas-confetti';
 import {
   RotateCw,
-  Play,
-  Pause,
+  Volume2,
   Calendar,
   Sparkles,
-  Volume2,
-  CheckCircle2,
-  Info,
+  Play,
+  Pause,
   Clock,
   Compass,
+  Smile,
 } from 'lucide-react';
 
 interface MagicWheelViewProps {
@@ -25,127 +23,109 @@ interface MagicWheelViewProps {
 export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
   initialSeason = 'primavara',
 }) => {
-  // Current rotation angle in degrees (0 = Primavara, 90 = Vara, 180 = Toamna, 270 = Iarna)
-  const [rotationAngle, setRotationAngle] = useState<number>(() => {
-    switch (initialSeason) {
-      case 'vara': return 90;
-      case 'toamna': return 180;
-      case 'iarna': return 270;
-      default: return 0;
-    }
-  });
+  // Rotation angle in degrees of the top small disc
+  const [rotationAngle, setRotationAngle] = useState<number>(0);
+  const [isSlowAutoSpinning, setIsSlowAutoSpinning] = useState<boolean>(false);
+  const [hasPointerExtension, setHasPointerExtension] = useState<boolean>(true);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
 
-  const [isSlowAutoSpinning, setIsSlowAutoSpinning] = useState(false);
-  const [activeSeasonKey, setActiveSeasonKey] = useState<SeasonId>(initialSeason);
-  const [hasPointerExtension, setHasPointerExtension] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  const autoSpinIntervalRef = useRef<number | null>(null);
+  // Drag interaction state
   const wheelContainerRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef(false);
-  const startAngleRef = useRef(0);
-  const currentAngleRef = useRef(rotationAngle);
+  const isDraggingRef = useRef<boolean>(false);
+  const startAngleRef = useRef<number>(0);
+  const currentAngleRef = useRef<number>(0);
 
   // Sync ref with state
-  currentAngleRef.current = rotationAngle;
-
-  // Calculate which season is currently visible based on angle (normalized 0 to 360)
-  const getSeasonFromAngle = (deg: number): SeasonId => {
-    const norm = ((deg % 360) + 360) % 360;
-    // 0 to 45 or 315 to 360 -> Primavara (window is top-right, aligned at 0)
-    // In our SVG, window reveals quadrant from angle - 45 to + 45, or exactly:
-    if (norm >= 315 || norm < 45) return 'primavara';
-    if (norm >= 45 && norm < 135) return 'vara';
-    if (norm >= 135 && norm < 225) return 'toamna';
-    return 'iarna';
-  };
-
-  const currentSeason = SEASONS[activeSeasonKey];
-
-  // Update active season when rotation changes
   useEffect(() => {
-    const seasonId = getSeasonFromAngle(rotationAngle);
-    if (seasonId !== activeSeasonKey) {
-      setActiveSeasonKey(seasonId);
-      // Play season sound when passing into a new season
-      const s = SEASONS[seasonId];
-      if (s.soundType === 'birds') soundEngine.playSpringBirds();
-      else if (s.soundType === 'splash') soundEngine.playSummerSplash();
-      else if (s.soundType === 'leaves') soundEngine.playAutumnLeaves();
-      else if (s.soundType === 'wind') soundEngine.playWinterWind();
+    currentAngleRef.current = rotationAngle;
+  }, [rotationAngle]);
+
+  // Handle initial season if specified
+  useEffect(() => {
+    if (initialSeason) {
+      rotateToSeason(initialSeason);
     }
-  }, [rotationAngle, activeSeasonKey]);
+  }, [initialSeason]);
 
-  // Handle slow continuous auto-spinning (as in story)
+  // Auto slow spin mode (illustrating the story's "se rotea foarte, foarte încet de-a lungul anului")
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
     if (isSlowAutoSpinning) {
-      autoSpinIntervalRef.current = window.setInterval(() => {
-        setRotationAngle((prev) => (prev + 0.5) % 360);
+      interval = setInterval(() => {
+        setRotationAngle((prev) => (prev + 0.35) % 360);
       }, 50);
-    } else {
-      if (autoSpinIntervalRef.current) {
-        clearInterval(autoSpinIntervalRef.current);
-        autoSpinIntervalRef.current = null;
-      }
     }
     return () => {
-      if (autoSpinIntervalRef.current) {
-        clearInterval(autoSpinIntervalRef.current);
-      }
+      if (interval) clearInterval(interval);
     };
   }, [isSlowAutoSpinning]);
 
-  // Turn smoothly to a specific season
-  const rotateToSeason = (seasonId: SeasonId) => {
-    setIsSlowAutoSpinning(false);
-    SpeechService.stop();
-    setIsSpeaking(false);
-    soundEngine.playChime();
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      SpeechService.stop();
+    };
+  }, []);
 
-    let target = 0;
-    if (seasonId === 'vara') target = 90;
-    else if (seasonId === 'toamna') target = 180;
-    else if (seasonId === 'iarna') target = 270;
+  // Compute active season based on rotationAngle
+  const normalizedAngle = ((rotationAngle % 360) + 360) % 360;
 
-    setRotationAngle(target);
-    setActiveSeasonKey(seasonId);
-
-    // Celebrate when turning
-    confetti({
-      particleCount: 25,
-      spread: 60,
-      origin: { y: 0.6 },
-      colors: ['#F59E0B', '#10B981', '#38BDF8', '#EA580C'],
-    });
+  const getActiveSeasonKey = (): SeasonId => {
+    if (normalizedAngle >= 315 || normalizedAngle < 45) return 'primavara';
+    if (normalizedAngle >= 45 && normalizedAngle < 135) return 'vara';
+    if (normalizedAngle >= 135 && normalizedAngle < 225) return 'toamna';
+    return 'iarna';
   };
 
-  // Next quarter rotation
+  const activeSeasonKey = getActiveSeasonKey();
+  const currentSeason = SEASONS[activeSeasonKey];
+
+  // Rotate to specific season quarter
+  const rotateToSeason = (seasonId: SeasonId | string) => {
+    setIsSlowAutoSpinning(false);
+    let target = 0;
+    switch (seasonId) {
+      case 'primavara':
+        target = 0;
+        break;
+      case 'vara':
+        target = 90;
+        break;
+      case 'toamna':
+        target = 180;
+        break;
+      case 'iarna':
+        target = 270;
+        break;
+    }
+    soundEngine.playPop();
+    setRotationAngle(target);
+  };
+
+  // Step 90 degrees forward
   const rotateToNextSeason = () => {
     setIsSlowAutoSpinning(false);
-    SpeechService.stop();
-    setIsSpeaking(false);
     soundEngine.playPop();
-
-    const nextAngle = Math.round(rotationAngle / 90) * 90 + 90;
+    const currentSnapped = Math.round(rotationAngle / 90) * 90;
+    const nextAngle = currentSnapped + 90;
     setRotationAngle(nextAngle);
+    soundEngine.playChime();
   };
 
-  // Calendar sync: find real season for today's month
+  // Calendar sync: identify today's real month
   const syncWithRealCalendar = () => {
     setIsSlowAutoSpinning(false);
-    soundEngine.playSuccessFanfare();
+    const month = new Date().getMonth(); // 0-11
+    let targetSeason: SeasonId = 'primavara';
 
-    const currentMonth = new Date().getMonth(); // 0 = Jan, 11 = Dec
-    let targetSeason: SeasonId = 'iarna';
-
-    if (currentMonth >= 2 && currentMonth <= 4) {
-      targetSeason = 'primavara'; // March, April, May
-    } else if (currentMonth >= 5 && currentMonth <= 7) {
-      targetSeason = 'vara'; // June, July, August
-    } else if (currentMonth >= 8 && currentMonth <= 10) {
-      targetSeason = 'toamna'; // Sept, Oct, Nov
+    if (month >= 2 && month <= 4) {
+      targetSeason = 'primavara';
+    } else if (month >= 5 && month <= 7) {
+      targetSeason = 'vara';
+    } else if (month >= 8 && month <= 10) {
+      targetSeason = 'toamna';
     } else {
-      targetSeason = 'iarna'; // Dec, Jan, Feb
+      targetSeason = 'iarna';
     }
 
     rotateToSeason(targetSeason);
@@ -170,7 +150,7 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
     );
   };
 
-  // Interactive Drag & Touch rotation logic
+  // Pointer/Touch rotation
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!wheelContainerRef.current) return;
     isDraggingRef.current = true;
@@ -197,7 +177,6 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
   const handlePointerUp = () => {
     if (isDraggingRef.current) {
       isDraggingRef.current = false;
-      // Snap to nearest 90 degrees lightly for neatness
       const snapped = Math.round(currentAngleRef.current / 90) * 90;
       setRotationAngle(snapped);
       soundEngine.playChime();
@@ -207,17 +186,17 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Interactive Title Banner */}
-      <div className="bg-white/90 backdrop-blur-sm p-4 md:p-5 rounded-2xl border border-amber-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white/95 backdrop-blur-md p-4 sm:p-5 rounded-3xl border-2 border-amber-300 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center border border-amber-300 shadow-xs">
-            <Compass className="w-6 h-6 text-amber-700" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center border-2 border-amber-300 shadow-xs text-amber-800">
+            <Compass className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 font-display">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 font-display">
               Roata Fermecată a Anului
             </h1>
-            <p className="text-xs md:text-sm text-amber-800 font-medium">
-              Rotește discul cu Nuca și descoperă cum se schimbă natura în cele 4 anotimpuri!
+            <p className="text-xs sm:text-sm text-amber-900 font-semibold">
+              Rotește discul cu Nuca și privește prin fereastra magică cum se schimbă natura!
             </p>
           </div>
         </div>
@@ -226,11 +205,11 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
         <button
           id="calendar-sync-btn"
           onClick={syncWithRealCalendar}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-transform active:scale-95 shadow-xs"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black bg-amber-100/90 hover:bg-amber-200 text-amber-950 border-2 border-amber-300 transition-transform active:scale-95 shadow-xs"
           title="Unde este Nuca în calendarul de azi?"
         >
-          <Calendar className="w-4 h-4 text-amber-700" />
-          <span>Unde e Nuca azi? (Calendar)</span>
+          <Calendar className="w-4 h-4 text-amber-800" />
+          <span>Unde e Nuca azi? (Calendar) 📅</span>
         </button>
       </div>
 
@@ -238,23 +217,24 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Left / Top: The Interactive 2-Disc Wheel */}
         <div className="lg:col-span-6 flex flex-col items-center">
-          <div className="relative p-2 bg-amber-100/50 rounded-full border-4 border-amber-300/60 shadow-xl">
-            {/* The Outer Base Disc (Fixed or under) */}
+          {/* Wheel Frame Platform */}
+          <div className="relative p-3 sm:p-4 bg-gradient-to-br from-amber-200 via-orange-100 to-amber-200 rounded-full border-4 border-amber-400 shadow-2xl">
+            {/* The Outer Base Disc */}
             <div
               ref={wheelContainerRef}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
-              className="relative w-[340px] h-[340px] sm:w-[400px] sm:h-[400px] cursor-grab active:cursor-grabbing touch-none select-none"
-              title="Apasă și trage cu degetul sau mouse-ul pentru a roti roata!"
+              className="relative w-[320px] h-[320px] sm:w-[390px] sm:h-[390px] cursor-grab active:cursor-grabbing touch-none select-none rounded-full"
+              title="Trage cu degetul sau mouse-ul pentru a roti roata fermecată!"
             >
               {/* Layer 1: Base Season Disc (4 seasons) */}
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <BaseDiscSVG size={380} className="w-full h-full" />
               </div>
 
-              {/* Layer 2: Rotating Small Cover Disc with cutout window and Nuca */}
+              {/* Layer 2: Rotating Small Cover Disc with cutout window and cute Nuca */}
               <div
                 className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
                 style={{
@@ -262,14 +242,14 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
                   transformOrigin: 'center center',
                 }}
               >
-                <SmallTopDiscSVG size={310} className="w-[82%] h-[82%]" />
+                <SmallTopDiscSVG size={315} className="w-[82%] h-[82%]" />
               </div>
 
               {/* Layer 3: Optional Pedagogical Extension: Fixed Nuca Pointer on Rim */}
               {hasPointerExtension && (
                 <div
-                  className="absolute -top-7 left-1/2 -translate-x-1/2 z-20 pointer-events-none filter drop-shadow-lg"
-                  title="Nuca fixă arată unde ne aflăm în an"
+                  className="absolute -top-7 left-1/2 -translate-x-1/2 z-20 pointer-events-none filter drop-shadow-md"
+                  title="Nuca fixă arată anotimpul activ"
                 >
                   <div className="flex flex-col items-center">
                     <NucaCharacter pose="pointing" size={54} />
@@ -280,10 +260,10 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
             </div>
           </div>
 
-          {/* Touch / Drag hint */}
-          <p className="text-xs text-amber-800 font-semibold mt-3 flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            Trage de roată cu degetul sau folosește butoanele de mai jos!
+          {/* Touch / Drag hint badge */}
+          <p className="text-xs text-amber-900 font-bold mt-4 flex items-center gap-1.5 bg-amber-100/80 px-4 py-1.5 rounded-full border border-amber-300 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+            Trage de roată cu degetul sau apasă butoanele de mai jos!
           </p>
 
           {/* Wheel Control Buttons */}
@@ -291,10 +271,10 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
             <button
               id="next-quarter-btn"
               onClick={rotateToNextSeason}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-transform active:scale-95"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-transform active:scale-95 border-2 border-amber-600"
             >
               <RotateCw className="w-4 h-4" />
-              Rotește la următorul anotimp
+              Rotește la următorul sfert!
             </button>
 
             <button
@@ -303,20 +283,20 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
                 soundEngine.playPop();
                 setIsSlowAutoSpinning(!isSlowAutoSpinning);
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold transition-colors border ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all border-2 ${
                 isSlowAutoSpinning
-                  ? 'bg-purple-600 text-white border-purple-700'
-                  : 'bg-white hover:bg-purple-50 text-purple-900 border-purple-300'
+                  ? 'bg-purple-600 text-white border-purple-700 shadow-md scale-102'
+                  : 'bg-white hover:bg-purple-50 text-purple-900 border-purple-300 shadow-xs'
               }`}
             >
               {isSlowAutoSpinning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              <span>{isSlowAutoSpinning ? 'Oprește rotirea' : 'Rotește singură (poveste)'}</span>
+              <span>{isSlowAutoSpinning ? 'Oprește rotirea' : 'Rotește singură (ca în poveste)'}</span>
             </button>
           </div>
 
           {/* Extension feature toggle from story */}
           <div className="mt-3">
-            <label className="inline-flex items-center gap-2 text-xs font-bold text-amber-900 bg-white/70 px-3 py-1.5 rounded-lg border border-amber-200 cursor-pointer select-none">
+            <label className="inline-flex items-center gap-2 text-xs font-bold text-amber-950 bg-white/90 px-3.5 py-1.5 rounded-xl border border-amber-300 cursor-pointer select-none shadow-2xs">
               <input
                 id="pointer-extension-checkbox"
                 type="checkbox"
@@ -327,7 +307,7 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
                 }}
                 className="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500"
               />
-              <span>Extensie: Silueta lui Nuca fixă ca ac de ceas</span>
+              <span>Indicator: Nuca arată prin fereastră</span>
             </label>
           </div>
         </div>
@@ -339,17 +319,26 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
             {(['primavara', 'vara', 'toamna', 'iarna'] as SeasonId[]).map((sId) => {
               const s = SEASONS[sId];
               const isSelected = activeSeasonKey === sId;
+              const emoji =
+                sId === 'primavara'
+                  ? '🌸'
+                  : sId === 'vara'
+                  ? '☀️'
+                  : sId === 'toamna'
+                  ? '🍂'
+                  : '❄️';
               return (
                 <button
                   key={sId}
                   id={`season-pill-${sId}`}
                   onClick={() => rotateToSeason(sId)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+                  className={`py-2.5 px-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5 border-2 ${
                     isSelected
-                      ? 'bg-slate-900 text-white shadow-md border-slate-900 scale-105'
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                      ? 'bg-amber-500 text-white shadow-md border-amber-600 scale-105'
+                      : 'bg-white hover:bg-amber-50 text-slate-800 border-amber-200 shadow-2xs'
                   }`}
                 >
+                  <span className="text-sm">{emoji}</span>
                   <span>{s.name}</span>
                 </button>
               );
@@ -358,20 +347,23 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
 
           {/* Active Season Card */}
           <div
-            className={`p-6 md:p-7 rounded-3xl border-2 transition-all shadow-lg bg-gradient-to-br ${currentSeason.bgGradient} border-amber-300/80`}
+            className={`p-6 sm:p-7 rounded-3xl border-3 transition-all shadow-xl bg-gradient-to-br ${currentSeason.bgGradient} border-amber-300 relative storybook-card`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border ${currentSeason.badgeColor}`}>
+                <span className={`px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border shadow-xs ${currentSeason.badgeColor}`}>
                   {currentSeason.temperature}
                 </span>
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 font-display mt-2">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-display mt-2">
                   {currentSeason.title}
                 </h2>
               </div>
 
               {/* Nuca Avatar for this season */}
-              <div className="shrink-0 bg-white/80 p-2 rounded-2xl border border-amber-200 shadow-sm">
+              <div
+                className="shrink-0 bg-white/95 p-2 rounded-2xl border-2 border-amber-300 shadow-md cursor-pointer group"
+                title="Apasă pe Nuca pentru o reacție simpatică!"
+              >
                 <NucaCharacter
                   pose={
                     activeSeasonKey === 'vara'
@@ -382,34 +374,35 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
                       ? 'sleeping'
                       : 'happy'
                   }
-                  size={65}
+                  size={70}
                 />
               </div>
             </div>
 
-            {/* Nuca's Story Quote */}
-            <div className="mt-4 p-3.5 bg-white/90 rounded-2xl border-l-4 border-amber-500 shadow-xs">
-              <p className="text-base font-bold text-amber-950 italic">
-                {currentSeason.quote}
+            {/* Nuca's Story Quote Bubble */}
+            <div className="mt-4 p-4 bg-white/95 rounded-2xl border-l-4 border-amber-500 shadow-xs flex items-center gap-3">
+              <span className="text-2xl shrink-0">💬</span>
+              <p className="text-base sm:text-lg font-bold text-amber-950 italic">
+                „{currentSeason.quote}”
               </p>
             </div>
 
             {/* Nature Description */}
             <div className="mt-4 space-y-3">
-              <div className="bg-white/80 p-3.5 rounded-xl border border-amber-100">
-                <p className="text-xs font-bold uppercase text-slate-500 mb-1">
-                  Ce se întâmplă în pădure:
+              <div className="bg-white/85 p-4 rounded-2xl border border-amber-200">
+                <p className="text-xs font-black uppercase text-amber-800 mb-1 flex items-center gap-1.5">
+                  <span>🌲</span> Ce se întâmplă în pădure:
                 </p>
-                <p className="text-sm font-medium text-slate-800 leading-relaxed">
+                <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
                   {currentSeason.natureDescription}
                 </p>
               </div>
 
-              <div className="bg-white/80 p-3.5 rounded-xl border border-amber-100">
-                <p className="text-xs font-bold uppercase text-slate-500 mb-1">
-                  Ce face Nuca:
+              <div className="bg-white/85 p-4 rounded-2xl border border-amber-200">
+                <p className="text-xs font-black uppercase text-amber-800 mb-1 flex items-center gap-1.5">
+                  <span>🐿️</span> Ce face Nuca:
                 </p>
-                <p className="text-sm font-medium text-slate-800 leading-relaxed">
+                <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
                   {currentSeason.nucaActivity}
                 </p>
               </div>
@@ -417,13 +410,13 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
 
             {/* Months in Romanian */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" /> Lunile:
+              <span className="text-xs font-black text-amber-900 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-amber-700" /> Lunile:
               </span>
               {currentSeason.months.map((m) => (
                 <span
                   key={m}
-                  className="px-2.5 py-1 bg-white/90 text-slate-800 text-xs font-bold rounded-lg border border-slate-200 shadow-2xs"
+                  className="px-3 py-1 bg-white/95 text-slate-800 text-xs font-extrabold rounded-xl border border-amber-200 shadow-2xs"
                 >
                   {m}
                 </span>
@@ -431,18 +424,18 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
             </div>
 
             {/* Action Bar: Audio and Nature sounds */}
-            <div className="mt-5 pt-4 border-t border-amber-200/60 flex flex-wrap items-center justify-between gap-3">
+            <div className="mt-5 pt-4 border-t-2 border-amber-200 flex flex-wrap items-center justify-between gap-3">
               <button
                 id="speak-season-btn"
                 onClick={speakSeason}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-bold shadow-xs transition-all ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black shadow-xs transition-all active:scale-95 ${
                   isSpeaking
-                    ? 'bg-amber-500 text-white animate-pulse'
-                    : 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-300'
+                    ? 'bg-amber-500 text-white animate-pulse shadow-amber-300'
+                    : 'bg-white hover:bg-amber-50 text-amber-950 border-2 border-amber-300'
                 }`}
               >
                 <Volume2 className="w-4 h-4 text-amber-700" />
-                <span>{isSpeaking ? 'Oprește vocea' : 'Ascultă povestea sezonului'}</span>
+                <span>{isSpeaking ? 'Oprește vocea' : 'Ascultă povestea sezonului 🔊'}</span>
               </button>
 
               <button
@@ -453,10 +446,10 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
                   else if (currentSeason.soundType === 'leaves') soundEngine.playAutumnLeaves();
                   else if (currentSeason.soundType === 'wind') soundEngine.playWinterWind();
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 hover:bg-white text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors"
+                className="flex items-center gap-2 px-3.5 py-2.5 bg-white/95 hover:bg-amber-50 text-amber-950 text-xs font-extrabold rounded-2xl border-2 border-amber-300 shadow-2xs transition-colors active:scale-95"
               >
-                <Play className="w-3 h-3 text-amber-600 fill-amber-600" />
-                Sunetul specific
+                <Play className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
+                Sunetul naturii
               </button>
             </div>
           </div>

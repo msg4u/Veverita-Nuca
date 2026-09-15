@@ -224,23 +224,23 @@ export const GamesView: React.FC = () => {
         </div>
       ) : (
         /* Game Completion Card */
-        <div className="bg-white rounded-3xl p-8 border-2 border-amber-200 shadow-xl text-center space-y-6">
-          <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center border-2 border-amber-300 shadow-md">
-            <NucaCharacter pose="happy" size={80} />
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border-3 border-amber-300 shadow-xl text-center space-y-6 storybook-card">
+          <div className="w-28 h-28 mx-auto rounded-3xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center border-2 border-amber-300 shadow-md">
+            <NucaCharacter pose="badge" size={90} />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 font-display">
-              Felicitări, micuț explorator! 🌰
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 font-display">
+              Felicitări, micuț explorator! 🌰👑
             </h2>
-            <p className="text-sm md:text-base text-slate-600 font-medium max-w-md mx-auto">
-              Ai adunat <strong>{score} din {QUIZ_QUESTIONS.length}</strong> ghinde de aur! Nuca este foarte mândră de tine și are provizii bogate pentru tot anul!
+            <p className="text-base sm:text-lg text-slate-700 font-semibold max-w-md mx-auto">
+              Ai adunat <strong className="text-amber-700">{score} din {QUIZ_QUESTIONS.length}</strong> ghinde de aur! Nuca este tare fericită și are provizii bogate pentru tot anul!
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-3 bg-amber-50 px-6 py-3 rounded-2xl border border-amber-200">
-            <Trophy className="w-6 h-6 text-amber-600" />
-            <span className="text-sm font-bold text-amber-900">
+          <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-100 to-yellow-100 px-6 py-3.5 rounded-2xl border-2 border-amber-300 shadow-sm">
+            <Trophy className="w-6 h-6 text-amber-700" />
+            <span className="text-sm sm:text-base font-black text-amber-950">
               Diplomă de „Ajutor de nădejde al lui Nuca”
             </span>
           </div>
@@ -249,10 +249,10 @@ export const GamesView: React.FC = () => {
             <button
               id="quiz-restart-btn"
               onClick={handleRestart}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition-transform active:scale-95"
+              className="inline-flex items-center gap-2 px-7 py-3 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl shadow-md transition-transform active:scale-95 border-2 border-amber-600 text-base"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Joacă din nou!</span>
+              <RotateCcw className="w-5 h-5" />
+              <span>Joacă din nou! 🔄</span>
             </button>
           </div>
         </div>
