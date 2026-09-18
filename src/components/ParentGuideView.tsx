@@ -8,6 +8,7 @@ import {
   Lightbulb,
   Heart,
   Volume2,
+  VolumeX,
   Calendar,
   Sparkles,
   ChevronDown,
@@ -16,15 +17,27 @@ import {
 
 export const ParentGuideView: React.FC = () => {
   const [expandedQuestionId, setExpandedQuestionId] = useState<string>('q1');
+  const [readingQuestionId, setReadingQuestionId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
     soundEngine.playPop();
     setExpandedQuestionId((prev) => (prev === id ? '' : id));
   };
 
-  const readQuestion = (text: string) => {
+  const readQuestion = (text: string, qId: string) => {
+    if (readingQuestionId === qId) {
+      SpeechService.stop();
+      setReadingQuestionId(null);
+      return;
+    }
     soundEngine.playPop();
-    SpeechService.speak(text);
+    setReadingQuestionId(qId);
+    SpeechService.speak(
+      text,
+      () => setReadingQuestionId(null),
+      () => setReadingQuestionId(qId),
+      `parent_${qId}`
+    );
   };
 
   return (
@@ -121,12 +134,20 @@ export const ParentGuideView: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        readQuestion(q.question);
+                        readQuestion(q.question, q.id);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-700"
-                      title="Citește întrebarea"
+                      className={`p-1.5 rounded-lg transition-all ${
+                        readingQuestionId === q.id
+                          ? 'bg-rose-100 text-rose-700 animate-pulse'
+                          : 'hover:bg-amber-100 text-amber-700'
+                      }`}
+                      title={readingQuestionId === q.id ? 'Oprește lectura' : 'Citește întrebarea'}
                     >
-                      <Volume2 className="w-4 h-4" />
+                      {readingQuestionId === q.id ? (
+                        <VolumeX className="w-4 h-4 text-rose-700" />
+                      ) : (
+                        <Volume2 className="w-4 h-4" />
+                      )}
                     </button>
                     {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </div>

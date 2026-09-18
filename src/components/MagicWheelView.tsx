@@ -146,7 +146,8 @@ export const MagicWheelView: React.FC<MagicWheelViewProps> = ({
     SpeechService.speak(
       textToRead,
       () => setIsSpeaking(false),
-      () => setIsSpeaking(true)
+      () => setIsSpeaking(true),
+      `season_${currentSeason.id}`
     );
   };
 

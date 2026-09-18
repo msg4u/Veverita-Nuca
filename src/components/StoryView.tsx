@@ -75,7 +75,8 @@ export const StoryView: React.FC<StoryViewProps> = ({ onGoToWheel }) => {
       },
       () => {
         setIsReading(true);
-      }
+      },
+      `story_${currentPage.id}`
     );
   };
 

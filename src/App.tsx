@@ -52,8 +52,10 @@ export default function App() {
 
   const handleCompanionClick = () => {
     soundEngine.playSquirrelChirp();
-    const randomJoke = nucaJokes[Math.floor(Math.random() * nucaJokes.length)];
+    const jokeIdx = Math.floor(Math.random() * nucaJokes.length);
+    const randomJoke = nucaJokes[jokeIdx];
     setCompanionBubble(randomJoke);
+    SpeechService.speak(randomJoke, undefined, undefined, `nuca_${jokeIdx + 1}`);
   };
 
   return (

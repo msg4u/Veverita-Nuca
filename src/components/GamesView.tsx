@@ -8,6 +8,7 @@ import {
   Trophy,
   RotateCcw,
   Volume2,
+  VolumeX,
   CheckCircle2,
   XCircle,
   HelpCircle,
@@ -20,6 +21,7 @@ export const GamesView: React.FC = () => {
   const [score, setScore] = useState(0);
   const [answeredMap, setAnsweredMap] = useState<Record<number, { selectedId: string; isCorrect: boolean }>>({});
   const [gameFinished, setGameFinished] = useState(false);
+  const [isReadingPrompt, setIsReadingPrompt] = useState(false);
 
   const currentQuestion = QUIZ_QUESTIONS[activeQuestionIdx];
   const currentAnswer = answeredMap[currentQuestion?.id];
@@ -51,6 +53,7 @@ export const GamesView: React.FC = () => {
   const handleNextQuestion = () => {
     soundEngine.playPop();
     SpeechService.stop();
+    setIsReadingPrompt(false);
     setSelectedOptionId(null);
     if (activeQuestionIdx < QUIZ_QUESTIONS.length - 1) {
       setActiveQuestionIdx((i) => i + 1);
@@ -68,6 +71,7 @@ export const GamesView: React.FC = () => {
   const handleRestart = () => {
     soundEngine.playChime();
     SpeechService.stop();
+    setIsReadingPrompt(false);
     setActiveQuestionIdx(0);
     setSelectedOptionId(null);
     setScore(0);
@@ -77,9 +81,20 @@ export const GamesView: React.FC = () => {
 
   const readQuestionAudio = () => {
     if (!currentQuestion) return;
+    if (isReadingPrompt) {
+      SpeechService.stop();
+      setIsReadingPrompt(false);
+      return;
+    }
     soundEngine.playPop();
     const promptText = currentQuestion.questionAudioText || currentQuestion.prompt;
-    SpeechService.speak(promptText);
+    setIsReadingPrompt(true);
+    SpeechService.speak(
+      promptText,
+      () => setIsReadingPrompt(false),
+      () => setIsReadingPrompt(true),
+      `quiz_${currentQuestion.id}`
+    );
   };
 
   return (
@@ -124,10 +139,23 @@ export const GamesView: React.FC = () => {
             <button
               id="read-quiz-question-btn"
               onClick={readQuestionAudio}
-              className="flex items-center gap-1.5 px-3 py-1 bg-amber-100/70 hover:bg-amber-100 text-amber-900 text-xs font-bold rounded-lg border border-amber-200 transition-colors"
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                isReadingPrompt
+                  ? 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse'
+                  : 'bg-amber-100/80 hover:bg-amber-100 text-amber-900 border-amber-300'
+              }`}
             >
-              <Volume2 className="w-3.5 h-3.5 text-amber-700" />
-              Citește întrebarea
+              {isReadingPrompt ? (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 text-rose-700" />
+                  Oprește lectura
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-amber-700" />
+                  Citește întrebarea
+                </>
+              )}
             </button>
           </div>
 
